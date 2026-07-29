@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Wendlerized</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wendlerized">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#15161A">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%2315161A'/%3E%3Crect x='20' y='82' width='140' height='16' rx='3' fill='%23EDEBE4'/%3E%3Crect x='30' y='58' width='16' height='64' rx='2' fill='%23B23A2E'/%3E%3Crect x='134' y='58' width='16' height='64' rx='2' fill='%23B23A2E'/%3E%3Crect x='50' y='68' width='12' height='44' rx='2' fill='%232C5A85'/%3E%3Crect x='118' y='68' width='12' height='44' rx='2' fill='%232C5A85'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%2315161A'/%3E%3Crect x='20' y='82' width='140' height='16' rx='3' fill='%23EDEBE4'/%3E%3Crect x='30' y='58' width='16' height='64' rx='2' fill='%23B23A2E'/%3E%3Crect x='134' y='58' width='16' height='64' rx='2' fill='%23B23A2E'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#15161A;
+    --surface:#1E2025;
+    --surface-2:#262930;
+    --surface-3:#2E323A;
+    --border:#33363D;
+    --text:#EDEBE4;
+    --text-muted:#8B8F97;
+    --text-dim:#5B5F68;
+    --plate-red:#B23A2E;
+    --plate-blue:#2C5A85;
+    --plate-yellow:#D2A130;
+    --plate-green:#3F7D4F;
+    --plate-white:#DDD9CF;
+    --plate-black:#232427;
+    --deload:#5B5F68;
+    --danger:#B23A2E;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
+    overscroll-behavior-y:none;
+    -webkit-user-select:none; user-select:none;
+    position:fixed; inset:0; overflow:hidden;
+  }
+  input, textarea{ -webkit-user-select:text; user-select:text; }
+  .app{ position:absolute; inset:0; display:flex; flex-direction:column; }
+
+  /* subtle chalk-dust texture on the background, restrained */
+  .app::before{
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:.035; z-index:0;
+    background-image:radial-gradient(circle at 20% 30%, #fff 0.5px, transparent 0.5px),
+                      radial-gradient(circle at 60% 70%, #fff 0.5px, transparent 0.5px),
+                      radial-gradient(circle at 80% 20%, #fff 0.5px, transparent 0.5px);
+    background-size:60px 60px, 90px 90px, 120px 120px;
+  }
+
+  header.topbar{
+    padding:calc(14px + var(--safe-t)) 20px 12px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--border); flex-shrink:0; z-index:2; background:var(--bg);
+  }
+  .brand{ display:flex; flex-direction:column; }
+  .brand .name{
+    font-weight:800; font-size:19px; text-transform:uppercase; letter-spacing:1px;
+  }
+  .brand .name span{ color:var(--plate-red); }
+  .brand .tag{ font-size:11px; color:var(--text-dim); margin-top:1px; letter-spacing:.3px;}
+  .cycle-badge{
+    display:flex; align-items:center; gap:8px; padding:7px 12px; border-radius:20px;
+    background:var(--surface-2); border:1px solid var(--border); font-size:12px; font-weight:700;
+    text-transform:uppercase; letter-spacing:.5px;
+  }
+  .cycle-badge .dot{ width:9px; height:9px; border-radius:50%; }
+
+  main{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; z-index:1; padding-bottom:14px;}
+  .screen{ padding:18px 20px 24px; display:none; }
+  .screen.active{ display:block; }
+
+  .section-label{
+    font-size:11px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-dim);
+    font-weight:700; margin:22px 0 10px;
+  }
+  .section-label:first-child{ margin-top:0; }
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:16px; margin-bottom:12px;
+  }
+
+  .lift-hero{
+    background:linear-gradient(180deg, var(--surface-2), var(--surface));
+    border:1px solid var(--border); border-radius:20px; padding:20px; margin-bottom:16px;
+    position:relative; overflow:hidden;
+  }
+  .lift-hero .week-stripe{ position:absolute; top:0; left:0; right:0; height:4px; }
+  .lift-hero .lift-name{
+    font-size:30px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; line-height:1.05;
+  }
+  .lift-hero .lift-sub{ color:var(--text-muted); font-size:13px; margin-top:4px; }
+  .lift-hero .tm-row{ display:flex; gap:20px; margin-top:14px; }
+  .tm-stat .n{ font-family:ui-monospace,'SF Mono',Menlo,monospace; font-size:20px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .tm-stat .l{ font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; margin-top:2px;}
+
+  .set-row{
+    display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--border);
+  }
+  .set-row:last-child{ border-bottom:none; }
+  .set-check{
+    width:26px; height:26px; border-radius:8px; border:2px solid var(--text-dim); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800;
+  }
+  .set-check.done{ background:var(--plate-green); border-color:var(--plate-green); color:#fff; }
+  .set-main{ flex:1; }
+  .set-weight{ font-family:ui-monospace,'SF Mono',Menlo,monospace; font-size:18px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .set-reps{ font-size:12px; color:var(--text-muted); margin-top:1px; }
+  .set-pct{ font-size:11px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+  .amrap-input{
+    width:56px; background:var(--surface-3); border:1px solid var(--border); border-radius:8px;
+    color:var(--text); font-family:ui-monospace,'SF Mono',Menlo,monospace; font-size:15px;
+    text-align:center; padding:6px 2px; font-weight:700;
+  }
+  .beat-tag{ font-size:10.5px; color:var(--plate-yellow); font-weight:700; margin-top:3px; }
+
+  .plate-viz{ display:flex; align-items:flex-end; justify-content:center; gap:2px; height:100px; padding:8px 0 4px; }
+  .plate-viz .side{ display:flex; align-items:center; gap:2px; }
+  .plate-viz .side.left{ flex-direction:row-reverse; }
+  .plate-viz .bar{ height:8px; width:34px; background:#9a9a9a; border-radius:2px; }
+  .plate{ border-radius:4px; display:flex; align-items:center; justify-content:center; }
+  .plate-label{ text-align:center; font-size:10.5px; color:var(--text-dim); margin-top:2px; letter-spacing:.3px;}
+
+  .assist-item{
+    display:flex; justify-content:space-between; align-items:center; padding:10px 2px; border-bottom:1px solid var(--border);
+  }
+  .assist-item:last-child{ border-bottom:none; }
+  .assist-name{ font-size:14.5px; font-weight:600; }
+  .assist-scheme{ font-size:12px; color:var(--text-muted); margin-top:2px; }
+  .assist-del{ color:var(--text-dim); font-size:13px; padding:4px 8px;}
+
+  .btn{
+    display:block; width:100%; text-align:center; padding:14px; border-radius:14px; border:none;
+    font-weight:700; font-size:15px; letter-spacing:.3px; text-transform:uppercase; cursor:pointer;
+  }
+  .btn-primary{ background:var(--plate-blue); color:#fff; }
+  .btn-finish{ background:var(--plate-green); color:#fff; }
+  .btn-ghost{ background:var(--surface-2); color:var(--text); border:1px solid var(--border); }
+  .btn-danger{ background:transparent; color:var(--plate-red); border:1px solid var(--plate-red); }
+  .btn-sm{ padding:9px 14px; font-size:12px; width:auto; display:inline-block; }
+  .row-2{ display:flex; gap:10px; }
+  .row-2 > *{ flex:1; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; font-weight:700;}
+  .field input, .field select{
+    width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:10px;
+    padding:12px 12px; color:var(--text); font-size:15px; font-family:inherit;
+  }
+  .field input[type=number]{ font-family:ui-monospace,'SF Mono',Menlo,monospace; }
+  .field-hint{ font-size:11.5px; color:var(--text-dim); margin-top:5px; }
+
+  .seg{ display:flex; background:var(--surface-2); border-radius:10px; padding:3px; border:1px solid var(--border); }
+  .seg button{
+    flex:1; border:none; background:transparent; color:var(--text-muted); padding:9px 0;
+    border-radius:8px; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.4px;
+  }
+  .seg button.active{ background:var(--plate-blue); color:#fff; }
+
+  .hist-group{ margin-bottom:18px; }
+  .hist-title{ font-size:13px; font-weight:700; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:.6px;}
+  .hist-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px;
+    margin-bottom:8px; position:relative; overflow:hidden; touch-action:pan-y;
+  }
+  .hist-card .swipe-del{
+    position:absolute; right:0; top:0; bottom:0; width:76px; background:var(--danger);
+    color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;
+    text-transform:uppercase;
+  }
+  .hist-card .hist-inner{ position:relative; background:var(--surface); transition:transform .18s; }
+  .hist-top{ display:flex; justify-content:space-between; align-items:baseline; }
+  .hist-lift{ font-weight:800; text-transform:uppercase; font-size:15px; }
+  .hist-date{ font-size:11.5px; color:var(--text-dim); }
+  .hist-sets{ font-size:12.5px; color:var(--text-muted); margin-top:6px; font-family:ui-monospace,'SF Mono',Menlo,monospace; }
+  .hist-amrap{ color:var(--plate-yellow); font-weight:700; }
+
+  .empty{ text-align:center; padding:50px 20px; color:var(--text-dim); }
+  .empty .big{ font-size:34px; margin-bottom:8px; }
+  .empty .msg{ font-size:14px; line-height:1.5; }
+
+  nav.tabbar{
+    flex-shrink:0; display:flex; border-top:1px solid var(--border); background:var(--bg);
+    padding-bottom:var(--safe-b); z-index:2;
+  }
+  nav.tabbar button{
+    flex:1; background:none; border:none; padding:10px 0 8px; display:flex; flex-direction:column;
+    align-items:center; gap:4px; color:var(--text-dim); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px;
+  }
+  nav.tabbar button.active{ color:var(--text); }
+  nav.tabbar button .ic{ width:22px; height:22px; }
+  nav.tabbar button.active .ic circle, nav.tabbar button.active .ic path, nav.tabbar button.active .ic rect{ stroke:var(--text); }
+
+  .setup-wrap{ min-height:100%; display:flex; flex-direction:column; padding:calc(24px + var(--safe-t)) 22px calc(24px + var(--safe-b)); }
+  .setup-step{ display:none; flex:1; flex-direction:column; }
+  .setup-step.active{ display:flex; }
+  .setup-progress{ display:flex; gap:6px; margin-bottom:26px; }
+  .setup-progress div{ flex:1; height:4px; border-radius:2px; background:var(--surface-2); }
+  .setup-progress div.done{ background:var(--plate-blue); }
+  .setup-title{ font-size:24px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+  .setup-desc{ font-size:13.5px; color:var(--text-muted); margin-bottom:24px; line-height:1.5; }
+  .setup-nav{ margin-top:auto; padding-top:20px; }
+  .lift-input-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:12px;
+  }
+  .lift-input-card .lname{ font-weight:800; text-transform:uppercase; font-size:14px; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
+  .lname .swatch{ width:10px; height:10px; border-radius:50%; }
+
+  .toast{
+    position:fixed; bottom:calc(90px + var(--safe-b)); left:50%; transform:translateX(-50%);
+    background:var(--surface-3); border:1px solid var(--border); color:var(--text); padding:11px 18px;
+    border-radius:24px; font-size:13px; font-weight:600; z-index:50; opacity:0; pointer-events:none;
+    transition:opacity .2s, transform .2s;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:40; display:none; align-items:flex-end;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal{
+    background:var(--surface); border-radius:20px 20px 0 0; width:100%; padding:20px 20px calc(20px + var(--safe-b));
+    max-height:80vh; overflow-y:auto;
+  }
+  .modal-handle{ width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 16px; }
+  .modal-title{ font-size:17px; font-weight:800; text-transform:uppercase; margin-bottom:16px; }
+
+  .icon-btn{ background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:10px; padding:8px 12px; font-size:13px; font-weight:700;}
+  ::-webkit-scrollbar{ display:none; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ===== SETUP WIZARD ===== -->
+  <div class="setup-wrap" id="setup" style="display:none;">
+    <div class="setup-progress" id="setupProgress"></div>
+
+    <div class="setup-step active" data-step="0">
+      <div class="setup-title">Wendler<span style="color:var(--plate-red)">ized</span></div>
+      <div class="setup-desc">An unofficial 5/3/1 log. Not affiliated with Jim Wendler — buy his books, they're the real methodology. This just does the math and remembers your numbers.</div>
+      <div class="setup-desc">First: what do you lift in?</div>
+      <div class="seg" id="unitSeg">
+        <button data-val="lb" class="active">Pounds</button>
+        <button data-val="kg">Kilograms</button>
+      </div>
+      <div class="setup-nav"><button class="btn btn-primary" onclick="setupNext()">Next</button></div>
+    </div>
+
+    <div class="setup-step" data-step="1">
+      <div class="setup-title">Your Lifts</div>
+      <div class="setup-desc">Enter each Training Max directly, or your 1-rep max and we'll take 90% for you.</div>
+      <div class="seg" id="tmModeSeg" style="margin-bottom:16px;">
+        <button data-val="tm" class="active">Enter Training Max</button>
+        <button data-val="rm">Enter 1RM</button>
+      </div>
+      <div id="liftInputs"></div>
+      <div class="setup-nav row-2">
+        <button class="btn btn-ghost" onclick="setupBack()">Back</button>
+        <button class="btn btn-primary" onclick="setupNext()">Next</button>
+      </div>
+    </div>
+
+    <div class="setup-step" data-step="2">
+      <div class="setup-title">Bar &amp; Rounding</div>
+      <div class="setup-desc">Used to calculate plate loading and round your working weights to something you can actually load.</div>
+      <div class="field">
+        <label>Barbell weight</label>
+        <input type="number" id="barWeightInput" value="45">
+      </div>
+      <div class="field">
+        <label>Round working weights to nearest</label>
+        <input type="number" id="roundInput" value="5">
+      </div>
+      <div class="setup-nav row-2">
+        <button class="btn btn-ghost" onclick="setupBack()">Back</button>
+        <button class="btn btn-primary" onclick="setupNext()">Next</button>
+      </div>
+    </div>
+
+    <div class="setup-step" data-step="3">
+      <div class="setup-title">Lift Order</div>
+      <div class="setup-desc">The order you rotate through each week. Classic Wendler order shown below — reorder if you like.</div>
+      <div id="orderList"></div>
+      <div class="setup-nav row-2">
+        <button class="btn btn-ghost" onclick="setupBack()">Back</button>
+        <button class="btn btn-finish" onclick="finishSetup()">Start Lifting</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN APP ===== -->
+  <div id="mainUI" style="display:none; height:100%; display:flex; flex-direction:column;">
+    <header class="topbar">
+      <div class="brand">
+        <div class="name">Wendler<span>ized</span></div>
+        <div class="tag">unofficial &middot; no affiliation to Jim Wendler</div>
+      </div>
+      <div class="cycle-badge" id="cycleBadge"></div>
+    </header>
+
+    <main>
+      <!-- TODAY -->
+      <div class="screen active" id="screen-today"></div>
+      <!-- HISTORY -->
+      <div class="screen" id="screen-history"></div>
+      <!-- CALC -->
+      <div class="screen" id="screen-calc"></div>
+      <!-- SETTINGS -->
+      <div class="screen" id="screen-settings"></div>
+    </main>
+
+    <nav class="tabbar">
+      <button class="tab-btn active" data-tab="today" onclick="switchTab('today')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="11" width="4" height="6"/><rect x="7" y="7" width="3" height="14"/><rect x="14" y="7" width="3" height="14"/><rect x="18" y="11" width="4" height="6"/></svg>
+        Today
+      </button>
+      <button class="tab-btn" data-tab="history" onclick="switchTab('history')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+        History
+      </button>
+      <button class="tab-btn" data-tab="calc" onclick="switchTab('calc')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
+        Plates
+      </button>
+      <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+        Settings
+      </button>
+    </nav>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script>
+/* ============================================================
+   WENDLERIZED — vanilla JS, single file, offline-first
+   ============================================================ */
+
+const STORAGE_KEY = 'wendlerized-state-v1';
+const LIFTS = ['press','deadlift','bench','squat'];
+const LIFT_LABEL = {press:'Overhead Press', deadlift:'Deadlift', bench:'Bench Press', squat:'Squat'};
+
+const WEEK_SCHEMES = {
+  1:{ pct:[.65,.75,.85], reps:[5,5,'5+'], color:'--plate-blue', label:'Week 1' },
+  2:{ pct:[.70,.80,.90], reps:[3,3,'3+'], color:'--plate-yellow', label:'Week 2' },
+  3:{ pct:[.75,.85,.95], reps:[5,3,'1+'], color:'--plate-red', label:'Week 3' },
+  4:{ pct:[.40,.50,.60], reps:[5,5,5],    color:'--deload', label:'Deload' }
+};
+// Returns the active scheme for a week — percentages come from state
+// (user-customizable in Settings) with reps/color/label from the fixed template.
+function getScheme(week){
+  const base = WEEK_SCHEMES[week];
+  const pct = (state && state.weekSchemes && state.weekSchemes[week]) ? state.weekSchemes[week] : base.pct;
+  return { ...base, pct };
+}
+function defaultWeekSchemes(){
+  const out = {};
+  Object.keys(WEEK_SCHEMES).forEach(w=> out[w] = WEEK_SCHEMES[w].pct.slice());
+  return out;
+}
+const WARMUP = [ {pct:.40, reps:5}, {pct:.50, reps:5}, {pct:.60, reps:3} ];
+
+const PLATE_COLORS = {
+  lb: { 45:'--plate-red', 35:'--plate-blue', 25:'--plate-yellow', 10:'--plate-green', 5:'--plate-white', 2.5:'--plate-black' },
+  kg: { 25:'--plate-red', 20:'--plate-blue', 15:'--plate-yellow', 10:'--plate-green', 5:'--plate-white', 2.5:'--plate-black', 1.25:'--plate-black' }
+};
+const DEFAULT_PLATES = { lb:[45,35,25,10,5,2.5], kg:[25,20,15,10,5,2.5,1.25] };
+
+let state = null;
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) state = JSON.parse(raw);
+    if(state && !state.weekSchemes) state.weekSchemes = defaultWeekSchemes();
+  }catch(e){ console.error('load failed', e); }
+}
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e){ console.error('save failed', e); showToast('Storage error — changes may not persist'); }
+}
+
+function defaultState(){
+  return {
+    units:'lb',
+    barWeight:45,
+    rounding:5,
+    plates: DEFAULT_PLATES.lb.slice(),
+    order: LIFTS.slice(),
+    weekSchemes: defaultWeekSchemes(),
+    lifts:{
+      press:{tm:95, inc:5},
+      deadlift:{tm:225, inc:10},
+      bench:{tm:135, inc:5},
+      squat:{tm:185, inc:10}
+    },
+    assistance:{
+      press:[{name:'Chin-ups', scheme:'5 x 10'}],
+      deadlift:[{name:'Back Extensions', scheme:'5 x 10'}],
+      bench:[{name:'Dumbbell Row', scheme:'5 x 10'}],
+      squat:[{name:'Leg Curl', scheme:'5 x 10'}]
+    },
+    position:{ cycle:1, week:1, liftIndex:0 },
+    todaySets:{}, // ephemeral check-state for current workout, keyed by set id
+    history:[]
+  };
+}
+
+function roundW(w){
+  const r = state.rounding || 1;
+  return Math.round(w/r)*r;
+}
+function fmtW(w){
+  return (Number.isInteger(w) ? w : w.toFixed(1)) + ' ' + state.units;
+}
+
+/* ---------- toast ---------- */
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* ---------- modal ---------- */
+function openModal(html){
+  document.getElementById('modalBody').innerHTML = '<div class="modal-handle"></div>' + html;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('show'); }
+
+/* ============================================================
+   SETUP WIZARD
+   ============================================================ */
+let setupStep = 0;
+let setupData = { units:'lb', tmMode:'tm' };
+
+function initSetup(){
+  document.getElementById('setup').style.display = 'flex';
+  document.getElementById('mainUI').style.display = 'none';
+  renderSetupProgress();
+  buildLiftInputs();
+  buildOrderList();
+
+  document.getElementById('unitSeg').addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    [...e.currentTarget.children].forEach(c=>c.classList.remove('active'));
+    b.classList.add('active');
+    setupData.units = b.dataset.val;
+    document.getElementById('barWeightInput').value = setupData.units==='lb' ? 45 : 20;
+    document.getElementById('roundInput').value = setupData.units==='lb' ? 5 : 2.5;
+    buildLiftInputs();
+  });
+  document.getElementById('tmModeSeg').addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    [...e.currentTarget.children].forEach(c=>c.classList.remove('active'));
+    b.classList.add('active');
+    setupData.tmMode = b.dataset.val;
+    buildLiftInputs();
+  });
+}
+
+function renderSetupProgress(){
+  const steps = document.querySelectorAll('.setup-step');
+  const wrap = document.getElementById('setupProgress');
+  wrap.innerHTML = '';
+  steps.forEach((s,i)=>{
+    const d = document.createElement('div');
+    if(i<=setupStep) d.classList.add('done');
+    wrap.appendChild(d);
+  });
+}
+
+function buildLiftInputs(){
+  const wrap = document.getElementById('liftInputs');
+  wrap.innerHTML = '';
+  const defaults = { press:95, deadlift:225, bench:135, squat:185 };
+  const incDefaults = { press:5, deadlift:10, bench:5, squat:10 };
+  LIFTS.forEach(l=>{
+    const swatch = WEEK_SCHEMES[1].color;
+    const card = document.createElement('div');
+    card.className = 'lift-input-card';
+    const label = setupData.tmMode==='tm' ? 'Training Max' : '1-Rep Max';
+    card.innerHTML = `
+      <div class="lname"><span class="swatch" style="background:var(--plate-blue)"></span>${LIFT_LABEL[l]}</div>
+      <div class="row-2">
+        <div class="field" style="margin-bottom:0;">
+          <label>${label}</label>
+          <input type="number" data-lift="${l}" class="tm-input" value="${defaults[l]}">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Increment / cycle</label>
+          <input type="number" data-lift="${l}" class="inc-input" value="${incDefaults[l]}">
+        </div>
+      </div>`;
+    wrap.appendChild(card);
+  });
+}
+
+function buildOrderList(){
+  const wrap = document.getElementById('orderList');
+  if(!setupData.order) setupData.order = LIFTS.slice();
+  wrap.innerHTML = '';
+  setupData.order.forEach((l,i)=>{
+    const row = document.createElement('div');
+    row.className = 'card';
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:12px 14px;';
+    row.innerHTML = `
+      <div style="font-weight:700;">${i+1}. ${LIFT_LABEL[l]}</div>
+      <div>
+        <button class="icon-btn" onclick="moveOrder(${i},-1)" ${i===0?'disabled style="opacity:.3"':''}>&uarr;</button>
+        <button class="icon-btn" onclick="moveOrder(${i},1)" ${i===setupData.order.length-1?'disabled style="opacity:.3"':''}>&darr;</button>
+      </div>`;
+    wrap.appendChild(row);
+  });
+}
+function moveOrder(i, dir){
+  const arr = setupData.order;
+  const j = i+dir;
+  if(j<0||j>=arr.length) return;
+  [arr[i],arr[j]] = [arr[j],arr[i]];
+  buildOrderList();
+}
+
+function setupNext(){
+  if(setupStep===1){
+    // capture lift inputs
+    setupData.lifts = {};
+    document.querySelectorAll('.tm-input').forEach(inp=>{
+      const l = inp.dataset.lift;
+      let val = parseFloat(inp.value)||0;
+      if(setupData.tmMode==='rm') val = val*0.9;
+      setupData.lifts[l] = { tm: val };
+    });
+    document.querySelectorAll('.inc-input').forEach(inp=>{
+      const l = inp.dataset.lift;
+      setupData.lifts[l].inc = parseFloat(inp.value)||0;
+    });
+  }
+  if(setupStep===2){
+    setupData.barWeight = parseFloat(document.getElementById('barWeightInput').value)||45;
+    setupData.rounding = parseFloat(document.getElementById('roundInput').value)||5;
+  }
+  const steps = document.querySelectorAll('.setup-step');
+  if(setupStep < steps.length-1){
+    steps[setupStep].classList.remove('active');
+    setupStep++;
+    steps[setupStep].classList.add('active');
+    renderSetupProgress();
+  }
+}
+function setupBack(){
+  const steps = document.querySelectorAll('.setup-step');
+  if(setupStep>0){
+    steps[setupStep].classList.remove('active');
+    setupStep--;
+    steps[setupStep].classList.add('active');
+    renderSetupProgress();
+  }
+}
+
+function finishSetup(){
+  const s = defaultState();
+  s.units = setupData.units;
+  s.barWeight = setupData.barWeight;
+  s.rounding = setupData.rounding;
+  s.plates = DEFAULT_PLATES[setupData.units].slice();
+  s.order = setupData.order;
+  LIFTS.forEach(l=>{
+    s.lifts[l].tm = roundToStep(setupData.lifts[l].tm, s.rounding);
+    s.lifts[l].inc = setupData.lifts[l].inc;
+  });
+  state = s;
+  saveState();
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('mainUI').style.display = 'flex';
+  renderAll();
+  showToast('Cycle 1, Week 1 — let\'s go');
+}
+function roundToStep(v, step){ return Math.round(v/step)*step; }
+
+/* ============================================================
+   TABS
+   ============================================================ */
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  if(name==='today') renderToday();
+  if(name==='history') renderHistory();
+  if(name==='calc') renderCalc();
+  if(name==='settings') renderSettings();
+}
+
+function renderAll(){
+  renderCycleBadge();
+  renderToday();
+}
+
+function renderCycleBadge(){
+  const p = state.position;
+  const scheme = getScheme(p.week);
+  document.getElementById('cycleBadge').innerHTML = `
+    <span class="dot" style="background:var(${scheme.color})"></span>
+    Cycle ${p.cycle} &middot; ${scheme.label}`;
+}
+
+/* ============================================================
+   TODAY SCREEN
+   ============================================================ */
+function currentLift(){ return state.order[state.position.liftIndex]; }
+
+function renderToday(){
+  renderCycleBadge();
+  const el = document.getElementById('screen-today');
+  const p = state.position;
+  const lift = currentLift();
+  const scheme = getScheme(p.week);
+  const tm = state.lifts[lift].tm;
+
+  // warmups
+  const warmupRows = WARMUP.map(w=>{
+    const wt = roundW(tm*w.pct);
+    return `<div class="set-row">
+      <div class="set-check">&nbsp;</div>
+      <div class="set-main">
+        <div class="set-weight">${fmtW(wt)}</div>
+        <div class="set-reps">${w.reps} reps &middot; warm-up</div>
+      </div>
+      <div class="set-pct">${Math.round(w.pct*100)}%</div>
+    </div>`;
+  }).join('');
+
+  // main sets
+  const mainRows = scheme.pct.map((pct,i)=>{
+    const wt = roundW(tm*pct);
+    const reps = scheme.reps[i];
+    const isAmrap = typeof reps === 'string';
+    const setId = `${p.cycle}-${p.week}-${lift}-${i}`;
+    const done = !!state.todaySets[setId];
+    let beatTag = '';
+    if(isAmrap){
+      const best = bestAmrapReps(lift, p.week);
+      if(best!=null) beatTag = `<div class="beat-tag">Beat: ${best} reps</div>`;
+    }
+    return `<div class="set-row">
+      <div class="set-check ${done?'done':''}" onclick="toggleSet('${setId}')">${done?'&#10003;':''}</div>
+      <div class="set-main">
+        <div class="set-weight">${fmtW(wt)}</div>
+        <div class="set-reps">${isAmrap ? reps.replace('+',' + AMRAP') : reps + ' reps'}</div>
+        ${beatTag}
+      </div>
+      ${isAmrap ? `<input type="number" class="amrap-input" id="amrap-${i}" placeholder="reps" value="${state.todaySets[setId+'-reps']||''}">` : `<div class="set-pct">${Math.round(pct*100)}%</div>`}
+    </div>`;
+  }).join('');
+
+  const topWeight = roundW(tm*scheme.pct[scheme.pct.length-1]);
+  const plateViz = renderPlateViz(topWeight);
+
+  // assistance
+  const assist = state.assistance[lift] || [];
+  const assistRows = assist.map((a,i)=>`
+    <div class="assist-item">
+      <div>
+        <div class="assist-name">${escapeHtml(a.name)}</div>
+        <div class="assist-scheme">${escapeHtml(a.scheme)}</div>
+      </div>
+      <div class="assist-del" onclick="removeAssist('${lift}',${i})">Remove</div>
+    </div>`).join('') || `<div style="color:var(--text-dim); font-size:13px; padding:8px 2px;">No assistance work added yet.</div>`;
+
+  el.innerHTML = `
+    <div class="lift-hero">
+      <div class="week-stripe" style="background:var(${scheme.color})"></div>
+      <div class="lift-name">${LIFT_LABEL[lift]}</div>
+      <div class="lift-sub">${scheme.label} &middot; ${escapeHtml(scheme.reps.join(' / '))} reps</div>
+      <div class="tm-row">
+        <div class="tm-stat"><div class="n">${fmtW(tm)}</div><div class="l">Training Max</div></div>
+        <div class="tm-stat"><div class="n">${fmtW(topWeight)}</div><div class="l">Top Set</div></div>
+      </div>
+      ${plateViz}
+      <div class="plate-label">${fmtW(topWeight)} loaded on a ${fmtW(state.barWeight)} bar</div>
+    </div>
+
+    <div class="section-label">Warm-up</div>
+    <div class="card">${warmupRows}</div>
+
+    <div class="section-label">Working Sets</div>
+    <div class="card">${mainRows}</div>
+
+    <div class="section-label">Assistance</div>
+    <div class="card">
+      ${assistRows}
+      <button class="btn btn-sm btn-ghost" style="margin-top:10px;" onclick="promptAddAssist('${lift}')">+ Add Exercise</button>
+    </div>
+
+    <button class="btn btn-finish" style="margin-top:8px;" onclick="finishWorkout()">Finish Workout</button>
+  `;
+}
+
+function bestAmrapReps(lift, week){
+  const matches = state.history.filter(h=>h.lift===lift && h.week===week && h.amrapReps!=null);
+  if(!matches.length) return null;
+  return Math.max(...matches.map(m=>m.amrapReps));
+}
+
+function toggleSet(id){
+  state.todaySets[id] = !state.todaySets[id];
+  saveState();
+  renderToday();
+}
+
+function promptAddAssist(lift){
+  openModal(`
+    <div class="modal-title">Add Assistance Exercise</div>
+    <div class="field"><label>Exercise name</label><input type="text" id="assistName" placeholder="e.g. Face Pulls"></div>
+    <div class="field"><label>Sets &amp; reps</label><input type="text" id="assistScheme" placeholder="e.g. 3 x 12"></div>
+    <button class="btn btn-primary" onclick="addAssist('${lift}')">Add</button>
+  `);
+}
+function addAssist(lift){
+  const name = document.getElementById('assistName').value.trim();
+  const scheme = document.getElementById('assistScheme').value.trim();
+  if(!name){ showToast('Name it first'); return; }
+  if(!state.assistance[lift]) state.assistance[lift] = [];
+  state.assistance[lift].push({name, scheme: scheme || '—'});
+  saveState();
+  closeModal();
+  renderToday();
+}
+function removeAssist(lift, i){
+  state.assistance[lift].splice(i,1);
+  saveState();
+  renderToday();
+}
+
+function finishWorkout(){
+  const p = state.position;
+  const lift = currentLift();
+  const scheme = getScheme(p.week);
+  const amrapIdx = scheme.reps.findIndex(r=>typeof r==='string');
+  let amrapReps = null;
+  if(amrapIdx>-1){
+    const inp = document.getElementById('amrap-'+amrapIdx);
+    if(inp && inp.value!=='') amrapReps = parseInt(inp.value,10);
+  }
+  const tm = state.lifts[lift].tm;
+  const topWeight = roundW(tm*scheme.pct[scheme.pct.length-1]);
+
+  state.history.unshift({
+    date: new Date().toISOString(),
+    cycle: p.cycle,
+    week: p.week,
+    lift,
+    topWeight,
+    amrapReps
+  });
+
+  // advance rotation
+  state.todaySets = {};
+  p.liftIndex++;
+  if(p.liftIndex >= state.order.length){
+    p.liftIndex = 0;
+    p.week++;
+    if(p.week > 4){
+      p.week = 1;
+      p.cycle++;
+      LIFTS.forEach(l=>{
+        state.lifts[l].tm = roundW(state.lifts[l].tm + (state.lifts[l].inc||0));
+      });
+      showToast('Cycle complete — training maxes increased');
+    }
+  }
+  saveState();
+  renderAll();
+  if(!showToast.recentlyShownCycle) showToast('Workout logged');
+  switchTab('today');
+}
+
+/* ---------- plate visualization (signature element) ---------- */
+function calcPlatesPerSide(target){
+  const perSide = (target - state.barWeight)/2;
+  let remaining = Math.max(0, perSide);
+  const avail = [...state.plates].sort((a,b)=>b-a);
+  const used = [];
+  for(const p of avail){
+    while(remaining + 0.001 >= p){
+      used.push(p);
+      remaining -= p;
+    }
+  }
+  return used;
+}
+function renderPlateViz(targetWeight){
+  const plates = calcPlatesPerSide(targetWeight);
+  const colorFor = w => `var(${(PLATE_COLORS[state.units][w]) || '--plate-black'})`;
+  const maxH = 90, minH = 34;
+  const sizeFor = w => {
+    const big = state.units==='lb' ? 45 : 25;
+    return Math.round(minH + (maxH-minH) * Math.min(1, w/big));
+  };
+  const renderPlate = w => {
+    const h = sizeFor(w);
+    const wid = Math.max(10, Math.round(h*0.22));
+    const light = ['--plate-white'].includes(PLATE_COLORS[state.units][w]);
+    return `<div class="plate" style="height:${h}px;width:${wid}px;background:${colorFor(w)};color:${light?'#111':'#fff'};font-size:${wid>16?'9px':'0'};font-weight:800;">${w}</div>`;
+  };
+  const left = plates.map(renderPlate).join('');
+  const right = plates.map(renderPlate).join('');
+  return `<div class="plate-viz">
+    <div class="side left">${left}</div>
+    <div class="bar"></div>
+    <div class="side">${right}</div>
+  </div>`;
+}
+
+/* ============================================================
+   HISTORY SCREEN
+   ============================================================ */
+function renderHistory(){
+  const el = document.getElementById('screen-history');
+  if(!state.history.length){
+    el.innerHTML = `<div class="empty"><div class="big">&#128203;</div><div class="msg">No workouts logged yet.<br>Finish your first session and it'll show up here.</div></div>`;
+    return;
+  }
+  const groups = {};
+  state.history.forEach((h,i)=>{
+    const key = `Cycle ${h.cycle}`;
+    if(!groups[key]) groups[key] = [];
+    groups[key].push({...h, idx:i});
+  });
+  let html = '';
+  Object.keys(groups).forEach(key=>{
+    html += `<div class="hist-group"><div class="hist-title">${key}</div>`;
+    groups[key].forEach(h=>{
+      const scheme = getScheme(h.week);
+      const dateStr = new Date(h.date).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+      html += `
+      <div class="hist-card" data-idx="${h.idx}">
+        <div class="swipe-del" onclick="deleteHistory(${h.idx})">Delete</div>
+        <div class="hist-inner" style="border-left:3px solid var(${scheme.color}); padding-left:10px;" onclick="onHistoryTap(${h.idx})">
+          <div class="hist-top">
+            <div class="hist-lift">${LIFT_LABEL[h.lift]}</div>
+            <div class="hist-date">${dateStr}</div>
+          </div>
+          <div class="hist-sets">${scheme.label} &middot; top set ${fmtW(h.topWeight)}${h.amrapReps!=null ? ` &middot; <span class="hist-amrap">${h.amrapReps} reps</span>` : ''}</div>
+          <div class="field-hint" style="margin-top:6px;">Tap to edit</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  el.innerHTML = html;
+  attachSwipeHandlers();
+}
+
+function deleteHistory(idx){
+  state.history.splice(idx,1);
+  saveState();
+  renderHistory();
+}
+
+function editHistory(idx){
+  const h = state.history[idx];
+  const scheme = getScheme(h.week);
+  openModal(`
+    <div class="modal-title">Edit Workout</div>
+    <div class="field"><label>Lift</label><input type="text" value="${LIFT_LABEL[h.lift]}" readonly></div>
+    <div class="field"><label>Cycle &middot; Week</label><input type="text" value="Cycle ${h.cycle} &middot; ${scheme.label}" readonly></div>
+    <div class="row-2">
+      <div class="field"><label>Top Set Weight</label><input type="number" id="editWeight" value="${h.topWeight}"></div>
+      <div class="field"><label>AMRAP Reps</label><input type="number" id="editReps" value="${h.amrapReps!=null ? h.amrapReps : ''}" placeholder="none"></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveHistoryEdit(${idx})">Save Changes</button>
+  `);
+}
+function saveHistoryEdit(idx){
+  const wInp = document.getElementById('editWeight');
+  const rInp = document.getElementById('editReps');
+  const w = parseFloat(wInp.value);
+  const r = rInp.value.trim()==='' ? null : parseInt(rInp.value,10);
+  if(!isNaN(w)) state.history[idx].topWeight = w;
+  state.history[idx].amrapReps = (r==null || isNaN(r)) ? null : r;
+  saveState();
+  closeModal();
+  renderHistory();
+  showToast('Workout updated');
+}
+
+const historyDrag = {}; // per-idx flag: was this card dragged far enough to suppress the tap-to-edit?
+function attachSwipeHandlers(){
+  document.querySelectorAll('.hist-card').forEach(card=>{
+    const idx = card.dataset.idx;
+    const inner = card.querySelector('.hist-inner');
+    let startX=0, curX=0, dragging=false;
+    card.addEventListener('touchstart', e=>{ startX = e.touches[0].clientX; dragging=true; historyDrag[idx]=false; }, {passive:true});
+    card.addEventListener('touchmove', e=>{
+      if(!dragging) return;
+      curX = e.touches[0].clientX - startX;
+      if(Math.abs(curX) > 10) historyDrag[idx] = true;
+      if(curX<0) inner.style.transform = `translateX(${Math.max(curX,-76)}px)`;
+    }, {passive:true});
+    card.addEventListener('touchend', ()=>{
+      dragging=false;
+      if(curX < -40) inner.style.transform = 'translateX(-76px)';
+      else inner.style.transform = 'translateX(0)';
+      curX=0;
+    });
+  });
+}
+function onHistoryTap(idx){
+  if(historyDrag[idx]) return; // was a swipe, not a tap
+  editHistory(idx);
+}
+
+/* ============================================================
+   CALCULATOR SCREEN
+   ============================================================ */
+function renderCalc(){
+  const el = document.getElementById('screen-calc');
+  el.innerHTML = `
+    <div class="section-label">Plate Calculator</div>
+    <div class="card">
+      <div class="field"><label>Target weight (${state.units})</label><input type="number" id="calcTarget" value="135"></div>
+      <div id="calcVizWrap"></div>
+    </div>
+
+    <div class="section-label">1-Rep Max Estimator</div>
+    <div class="card">
+      <div class="row-2">
+        <div class="field"><label>Weight lifted</label><input type="number" id="rmWeight" value="185"></div>
+        <div class="field"><label>Reps performed</label><input type="number" id="rmReps" value="5"></div>
+      </div>
+      <div id="rmResult" style="font-family:ui-monospace,monospace; font-size:22px; font-weight:800; text-align:center; padding:6px 0;"></div>
+      <div class="field-hint" style="text-align:center;">Epley formula: 1RM = weight &times; (1 + reps/30)</div>
+    </div>
+  `;
+  const targetInp = document.getElementById('calcTarget');
+  const updateCalc = ()=>{
+    const t = parseFloat(targetInp.value)||0;
+    document.getElementById('calcVizWrap').innerHTML = renderPlateViz(t) + `<div class="plate-label">${fmtW(t)} on a ${fmtW(state.barWeight)} bar</div>`;
+  };
+  targetInp.addEventListener('input', updateCalc);
+  updateCalc();
+
+  const wInp = document.getElementById('rmWeight'), rInp = document.getElementById('rmReps');
+  const updateRm = ()=>{
+    const w = parseFloat(wInp.value)||0, r = parseFloat(rInp.value)||0;
+    const rm = r>0 ? w*(1+r/30) : 0;
+    document.getElementById('rmResult').textContent = rm ? fmtW(Math.round(rm)) : '—';
+  };
+  wInp.addEventListener('input', updateRm); rInp.addEventListener('input', updateRm);
+  updateRm();
+}
+
+/* ============================================================
+   SETTINGS SCREEN
+   ============================================================ */
+function renderSettings(){
+  const el = document.getElementById('screen-settings');
+  const liftRows = LIFTS.map(l=>`
+    <div class="card">
+      <div class="lname" style="font-weight:800; text-transform:uppercase; font-size:13px; margin-bottom:10px;">${LIFT_LABEL[l]}</div>
+      <div class="row-2">
+        <div class="field" style="margin-bottom:0;">
+          <label>Training Max</label>
+          <input type="number" value="${state.lifts[l].tm}" onchange="updateLiftField('${l}','tm',this.value)">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Cycle Increment</label>
+          <input type="number" value="${state.lifts[l].inc}" onchange="updateLiftField('${l}','inc',this.value)">
+        </div>
+      </div>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div class="section-label">Units &amp; Rounding</div>
+    <div class="card">
+      <div class="field">
+        <label>Units</label>
+        <select id="unitsSelect" onchange="updateUnits(this.value)">
+          <option value="lb" ${state.units==='lb'?'selected':''}>Pounds (lb)</option>
+          <option value="kg" ${state.units==='kg'?'selected':''}>Kilograms (kg)</option>
+        </select>
+      </div>
+      <div class="row-2">
+        <div class="field" style="margin-bottom:0;">
+          <label>Bar weight</label>
+          <input type="number" value="${state.barWeight}" onchange="updateField('barWeight', parseFloat(this.value))">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Round to nearest</label>
+          <input type="number" value="${state.rounding}" onchange="updateField('rounding', parseFloat(this.value))">
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Training Maxes</div>
+    ${liftRows}
+
+    <div class="section-label">Week Percentages</div>
+    ${[1,2,3,4].map(w=>{
+      const sch = getScheme(w);
+      return `<div class="card">
+        <div class="lname" style="font-weight:800; text-transform:uppercase; font-size:13px; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+          <span class="swatch" style="width:10px;height:10px;border-radius:50%;background:var(${sch.color})"></span>${sch.label}
+        </div>
+        <div style="display:flex; gap:8px;">
+          ${sch.pct.map((p,i)=>`
+            <div class="field" style="margin-bottom:0; flex:1;">
+              <label>Set ${i+1} (${sch.reps[i]})</label>
+              <input type="number" value="${Math.round(p*100)}" onchange="updateWeekPct(${w},${i},this.value)">
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+    <div class="card" style="padding:10px 14px;">
+      <button class="btn btn-sm btn-ghost" onclick="resetWeekPcts()">Reset to Standard 5/3/1</button>
+    </div>
+
+    <div class="section-label">Available Plates (${state.units})</div>
+    <div class="card">
+      <div style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">${state.plates.sort((a,b)=>b-a).join(', ')}</div>
+      <div class="field-hint">Used for the plate calculator and today's bar diagram.</div>
+    </div>
+
+    <div class="section-label">Data</div>
+    <div class="card">
+      <button class="btn btn-ghost" onclick="exportData()">Export Backup</button>
+      <div style="height:10px;"></div>
+      <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">Import Backup</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="importData(event)">
+      <div style="height:10px;"></div>
+      <button class="btn btn-danger" onclick="confirmReset()">Reset All Data</button>
+    </div>
+
+    <div class="section-label">About</div>
+    <div class="card" style="font-size:12.5px; color:var(--text-dim); line-height:1.6;">
+      This is my take on a Wendler 5/3/1 application. Unofficial, not affiliated with Jim Wendler — support his work by buying the books. All data stays on this device.
+    </div>
+  `;
+}
+
+function updateWeekPct(week, idx, val){
+  const v = parseFloat(val);
+  if(isNaN(v) || v<=0){ showToast('Enter a percentage above 0'); renderSettings(); return; }
+  if(!state.weekSchemes) state.weekSchemes = defaultWeekSchemes();
+  if(!state.weekSchemes[week]) state.weekSchemes[week] = WEEK_SCHEMES[week].pct.slice();
+  state.weekSchemes[week][idx] = v/100;
+  saveState();
+  showToast('Saved');
+  renderToday();
+}
+function resetWeekPcts(){
+  state.weekSchemes = defaultWeekSchemes();
+  saveState();
+  renderSettings();
+  renderToday();
+  showToast('Back to standard 5/3/1 percentages');
+}
+function updateLiftField(lift, field, val){
+  state.lifts[lift][field] = parseFloat(val)||0;
+  saveState();
+  showToast('Saved');
+}
+function updateField(field, val){
+  state[field] = val;
+  saveState();
+  renderToday();
+}
+function updateUnits(u){
+  if(u===state.units) return;
+  const factor = u==='kg' ? 0.453592 : 2.20462;
+  state.units = u;
+  LIFTS.forEach(l=> state.lifts[l].tm = Math.round(state.lifts[l].tm*factor));
+  state.barWeight = Math.round(state.barWeight*factor);
+  state.rounding = u==='kg' ? 2.5 : 5;
+  state.plates = DEFAULT_PLATES[u].slice();
+  saveState();
+  renderSettings();
+  renderToday();
+  showToast('Converted to ' + (u==='kg'?'kilograms':'pounds'));
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `wendlerized-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Backup downloaded');
+}
+function importData(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      if(!data.lifts || !data.order){ showToast('That file doesn\'t look right'); return; }
+      state = data;
+      saveState();
+      renderAll();
+      renderSettings();
+      showToast('Backup restored');
+    }catch(e){ showToast('Could not read that file'); }
+  };
+  reader.readAsText(file);
+}
+function confirmReset(){
+  openModal(`
+    <div class="modal-title">Reset All Data?</div>
+    <div style="font-size:14px; color:var(--text-muted); margin-bottom:18px; line-height:1.5;">This deletes every training max, history entry, and setting on this device. This can't be undone — export a backup first if you're not sure.</div>
+    <div class="row-2">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="doReset()">Delete Everything</button>
+    </div>
+  `);
+}
+function doReset(){
+  localStorage.removeItem(STORAGE_KEY);
+  state = null;
+  closeModal();
+  setupStep = 0;
+  setupData = { units:'lb', tmMode:'tm', order: LIFTS.slice() };
+  initSetup();
+}
+
+/* ---------- utils ---------- */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+loadState();
+if(state){
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('mainUI').style.display = 'flex';
+  renderAll();
+} else {
+  setupData.order = LIFTS.slice();
+  initSetup();
+}
+</script>
+</body>
+</html>
