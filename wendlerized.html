@@ -197,15 +197,15 @@
   nav.tabbar button .ic{ width:22px; height:22px; }
   nav.tabbar button.active .ic circle, nav.tabbar button.active .ic path, nav.tabbar button.active .ic rect{ stroke:var(--text); }
 
-  .setup-wrap{ min-height:100%; display:flex; flex-direction:column; padding:calc(24px + var(--safe-t)) 22px calc(24px + var(--safe-b)); }
-  .setup-step{ display:none; flex:1; flex-direction:column; }
-  .setup-step.active{ display:flex; }
+  .setup-wrap{ flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:calc(24px + var(--safe-t)) 22px calc(24px + var(--safe-b)); }
+  .setup-step{ display:none; }
+  .setup-step.active{ display:block; }
   .setup-progress{ display:flex; gap:6px; margin-bottom:26px; }
   .setup-progress div{ flex:1; height:4px; border-radius:2px; background:var(--surface-2); }
   .setup-progress div.done{ background:var(--plate-blue); }
   .setup-title{ font-size:24px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
   .setup-desc{ font-size:13.5px; color:var(--text-muted); margin-bottom:24px; line-height:1.5; }
-  .setup-nav{ margin-top:auto; padding-top:20px; }
+  .setup-nav{ margin-top:28px; }
   .lift-input-card{
     background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:12px;
   }
@@ -451,7 +451,7 @@ let setupStep = 0;
 let setupData = { units:'lb', tmMode:'tm' };
 
 function initSetup(){
-  document.getElementById('setup').style.display = 'flex';
+  document.getElementById('setup').style.display = 'block';
   document.getElementById('mainUI').style.display = 'none';
   renderSetupProgress();
   buildLiftInputs();
